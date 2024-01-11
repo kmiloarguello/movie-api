@@ -1,10 +1,19 @@
 from fastapi import FastAPI, Body
 from fastapi.responses import HTMLResponse
+from pydantic import BaseModel
 
 app = FastAPI()
 app.title = "My Movie API"
 app.version = "0.0.1"
 app.description = "This is a very fancy movie API"
+
+class Movie(BaseModel):
+    id: int
+    title: str
+    director: str
+    year: int
+    rating: float
+    categories: list
 
 movies = [
     {
@@ -66,14 +75,14 @@ def get_movie_by_category(category: str):
     return [movie for movie in movies if category in movie["categories"]]
 
 @app.post("/movies", tags=["movies"])
-def add_movie(id: int = Body() , title: str = Body(), director: str = Body(), year: int = Body(), rating: float = Body(), categories: list = Body()):
+def add_movie(movie: Movie):
     movies.append({
-        "id": id,
-        "title": title,
-        "director": director,
-        "year": year,
-        "rating": rating,
-        "categories": categories
+        "id": movie.id,
+        "title": movie.title,
+        "director": movie.director,
+        "year": movie.year,
+        "rating": movie.rating,
+        "categories": movie.categories
     })
     return movies[-1]
 
@@ -85,12 +94,12 @@ def delete_movie(id: int):
     return movies
 
 @app.put("/movies/{id}", tags=["movies"])
-def update_movie(id: int, title: str = Body(), director: str = Body(), year: int = Body(), rating: float = Body(), categories: list = Body()):
+def update_movie(id: int, movie: Movie):
     movies[id-1] = {
-        "title": title,
-        "director": director,
-        "year": year,
-        "rating": rating,
-        "categories": categories
+        "title": movie.title,
+        "director": movie.director,
+        "year": movie.year,
+        "rating": movie.rating,
+        "categories": movie.categories
     }
     return movies[id-1]
