@@ -6,6 +6,7 @@ from config.database import Session
 from models.movie import Movie as MovieModel
 from fastapi.encoders import jsonable_encoder
 from middlewares.jwt_bearer import JWTBearer
+from services.movie import MovieService
 
 movie_router = APIRouter()
 
@@ -32,13 +33,13 @@ class Movie(BaseModel):
 @movie_router.get("/movies", tags=["movies"], response_model=List[Movie], status_code=200, dependencies=[Depends(JWTBearer())])
 def get_movies() -> List[Movie]:
     db = Session()
-    result = db.query(MovieModel).all()
+    result = MovieService(db).get_movies()
     return JSONResponse(status_code=200, content=jsonable_encoder(result))
 
 @movie_router.get("/movies/{id}", tags=["movies"], response_model=Movie, status_code=200)
 def get_movie(id: int = Path(gt=0, le=2000)) -> Movie:
     db = Session()
-    result = db.query(MovieModel).filter(MovieModel.id == id).first()
+    result = MovieService(db).get_movie(id)
     if result is None:
         return JSONResponse(status_code=404, content={"message": "Movie not found"})
     return JSONResponse(status_code=200, content=jsonable_encoder(result))
@@ -46,13 +47,13 @@ def get_movie(id: int = Path(gt=0, le=2000)) -> Movie:
 @movie_router.get("/movies/", tags=["movies"], response_model=List[Movie], status_code=200)
 def get_movie_by_rating_and_year(rating: float = Query(), year: int = Query()) -> List[Movie]:
     db = Session()
-    result = db.query(MovieModel).filter(MovieModel.rating == rating, MovieModel.year == year).all()
+    result = MovieService(db).get_movie_by_rating_and_year(rating, year)
     return JSONResponse(status_code=200, content=jsonable_encoder(result))
 
 @movie_router.get("/movies/category/{category}", tags=["movies"], response_model=List[Movie], status_code=200)
 def get_movie_by_category(category: str) -> List[Movie]:
     db = Session()
-    result = db.query(MovieModel).filter(MovieModel.categories.contains(category)).all()
+    result = MovieService(db).get_movie_by_category(category)
     return JSONResponse(status_code=200, content=jsonable_encoder(result))
 
 @movie_router.post("/movies", tags=["movies"], status_code=201)
