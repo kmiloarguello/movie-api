@@ -1,5 +1,7 @@
 # Movie API
 
+![ca-movie-api](https://github.com/kmiloarguello/movie-api/assets/13356409/7303abd9-9bdd-4ed5-8083-6e7dae11bb1f)
+
 ## Description
 
 This is a simple API that allows you to create, read, update and delete movies from a database.
