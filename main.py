@@ -1,27 +1,23 @@
-from fastapi import FastAPI, Body, Path, Query, Request, HTTPException, Depends, status
+from fastapi import FastAPI,  Path, Query, Depends, status
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel, Field
 from typing import Optional, List
-from jwt_manager import create_token, validate_token
-from fastapi.security import HTTPBearer
+from jwt_manager import create_token
 from config.database import Session, engine, Base
 from models.movie import Movie as MovieModel
 from fastapi.encoders import jsonable_encoder
+from middlewares.error_handler import ErrorHandlerMiddleware
+from middlewares.jwt_bearer import JWTBearer
 
 app = FastAPI()
 app.title = "My Movie API"
 app.version = "0.0.1"
 app.description = "This is a very fancy movie API"
 
+app.add_middleware(ErrorHandlerMiddleware) # add error handler middleware
+
 Base.metadata.create_all(bind=engine) # create tables in database
 
-class JWTBearer(HTTPBearer):
-    async def __call__(self, request : Request):
-        auth = await super().__call__(request)
-        data = validate_token(auth.credentials)
-        if data["email"] != "ca@mi.lo":
-            raise HTTPException(status_code=403, detail="Invalid credentials")
-    
 class User(BaseModel):
     email: str = Field(min_length=1, max_length=50)
     password: str = Field(min_length=1, max_length=50)
