@@ -6,7 +6,8 @@ from sqlalchemy.ext.declarative import declarative_base # table manipulation
 sqlite_file_name = '../my-movie-api.db.sqlite'
 base_dir = os.path.abspath(os.path.dirname(__file__))
 
+## Install sqlite viewer in VSCode to see the database
 sqlite_uri = 'sqlite:///' + os.path.join(base_dir, sqlite_file_name)
 engine = create_engine(sqlite_uri, echo=True)
-session = sessionmaker(bind=engine)()
+Session = sessionmaker(bind=engine)
 Base = declarative_base()

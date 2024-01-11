@@ -8,4 +8,5 @@ class Movie(Base):
   title = Column(String(255))
   year = Column(Integer)
   rating = Column(Float)
+  director = Column(String(255))
   categories = Column(PickleType)

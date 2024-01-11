@@ -1,11 +1,12 @@
-from fastapi import FastAPI, Body, Path, Query, Request, HTTPException, Depends
+from fastapi import FastAPI, Body, Path, Query, Request, HTTPException, Depends, status
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from jwt_manager import create_token, validate_token
 from fastapi.security import HTTPBearer
-from config.database import session, engine, Base
-from models.movie import Movie
+from config.database import Session, engine, Base
+from models.movie import Movie as MovieModel
+from fastapi.encoders import jsonable_encoder
 
 app = FastAPI()
 app.title = "My Movie API"
@@ -93,13 +94,17 @@ def login(user: User):
 
 @app.get("/movies", tags=["movies"], response_model=List[Movie], status_code=200, dependencies=[Depends(JWTBearer())])
 def get_movies() -> List[Movie]:
-    return JSONResponse(status_code=200, content=movies)
+    db = Session()
+    result = db.query(MovieModel).all()
+    return JSONResponse(status_code=200, content=jsonable_encoder(result))
 
 @app.get("/movies/{id}", tags=["movies"], response_model=Movie, status_code=200)
 def get_movie(id: int = Path(gt=0, le=2000)) -> Movie:
-    if id > len(movies):
+    db = Session()
+    result = db.query(MovieModel).filter(MovieModel.id == id).first()
+    if result is None:
         return JSONResponse(status_code=404, content={"message": "Movie not found"})
-    return JSONResponse(status_code=200, content=movies[id-1])
+    return JSONResponse(status_code=200, content=jsonable_encoder(result))
 
 @app.get("/movies/", tags=["movies"], response_model=List[Movie], status_code=200)
 def get_movie_by_rating_and_year(rating: float = Query(), year: int = Query()) -> List[Movie]:
@@ -113,15 +118,11 @@ def get_movie_by_category(category: str) -> List[Movie]:
 
 @app.post("/movies", tags=["movies"], status_code=201)
 def add_movie(movie: Movie):
-    movies.append({
-        "id": movie.id,
-        "title": movie.title,
-        "director": movie.director,
-        "year": movie.year,
-        "rating": movie.rating,
-        "categories": movie.categories
-    })
-    return JSONResponse(status_code=201, content=movies[-1])
+    db = Session() # create database session
+    new_movie = MovieModel(**movie.model_dump()) # create new movie object
+    db.add(new_movie) # add new movie to database
+    db.commit() # save changes to database
+    return JSONResponse(status_code=status.HTTP_201_CREATED, content={"message": "Movie created successfully"})
 
 @app.put("/movies/{id}", tags=["movies"], status_code=200)
 def update_movie(id: int, movie: Movie):
