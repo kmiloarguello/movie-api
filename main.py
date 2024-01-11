@@ -74,7 +74,10 @@ def message() -> dict:
 
 @app.post("/login", tags=["auth"])
 def login(user: User):
-    return user
+    if user.email == "ca@mi.lo" and user.password == "ca123":
+        token = create_token(user.dict())
+        return JSONResponse(status_code=200, content={"message": "Login successful", "token": token})
+    return JSONResponse(status_code=401, content={"message": "Unauthorized"})
 
 @app.get("/movies", tags=["movies"], response_model=List[Movie], status_code=200)
 def get_movies() -> List[Movie]:
