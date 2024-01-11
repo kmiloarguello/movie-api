@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Body, Path, Query
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
 
 app = FastAPI()
 app.title = "My Movie API"
@@ -63,29 +63,30 @@ movies = [
     },
 ]
 
-@app.get("/", tags=["root"])
-def message():
+@app.get("/", tags=["root"], include_in_schema=False)
+def message() -> dict:
     return HTMLResponse("<h1>Welcome to my movie API</h1>")
 
 
-@app.get("/movies", tags=["movies"])
-def get_movies():
-    return movies
+@app.get("/movies", tags=["movies"], response_model=List[Movie])
+def get_movies() -> List[Movie]:
+    return JSONResponse(content=movies)
 
-@app.get("/movies/{id}", tags=["movies"])
-def get_movie(id: int = Path(gt=0, le=2000)):
+@app.get("/movies/{id}", tags=["movies"], response_model=Movie)
+def get_movie(id: int = Path(gt=0, le=2000)) -> Movie:
     if id > len(movies):
         return None
-    return movies[id-1]
+    return JSONResponse(content=movies[id-1])
 
-@app.get("/movies/", tags=["movies"])
-def get_movie_by_rating_and_year(rating: float = Query(max_length=5), year: int = Query(min_length=4,max_length=4)):
-    return [movie for movie in movies if movie["rating"] == rating and movie["year"] == year]
+@app.get("/movies/", tags=["movies"], response_model=List[Movie])
+def get_movie_by_rating_and_year(rating: float = Query(), year: int = Query()) -> List[Movie]:
+    data = [movie for movie in movies if movie["rating"] == rating and movie["year"] == year]
+    return JSONResponse(content=data)
 
-@app.get("/movies/category/{category}", tags=["movies"])
-def get_movie_by_category(category: str):
-    print("helo", category)
-    return [movie for movie in movies if category in movie["categories"]]
+@app.get("/movies/category/{category}", tags=["movies"], response_model=List[Movie])
+def get_movie_by_category(category: str) -> List[Movie]:
+    data = [movie for movie in movies if category in movie["categories"]]
+    return JSONResponse(content=data)
 
 @app.post("/movies", tags=["movies"])
 def add_movie(movie: Movie):
@@ -97,14 +98,14 @@ def add_movie(movie: Movie):
         "rating": movie.rating,
         "categories": movie.categories
     })
-    return movies[-1]
+    return JSONResponse(content=movies[-1])
 
 @app.delete("/movies/{id}", tags=["movies"])
 def delete_movie(id: int):
     if id > len(movies):
         return None
     movies.pop(id-1)
-    return movies
+    return JSONResponse(content=movies)
 
 @app.put("/movies/{id}", tags=["movies"])
 def update_movie(id: int, movie: Movie):
@@ -115,4 +116,4 @@ def update_movie(id: int, movie: Movie):
         "rating": movie.rating,
         "categories": movie.categories
     }
-    return movies[id-1]
+    return JSONResponse(content=movies[id-1])
