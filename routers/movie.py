@@ -1,9 +1,7 @@
 from fastapi import APIRouter,  Path, Query, Depends, status
 from fastapi.responses import JSONResponse
-from typing import  List, Optional
-from pydantic import BaseModel, Field
+from typing import  List
 from config.database import Session
-from models.movie import Movie as MovieModel
 from fastapi.encoders import jsonable_encoder
 from middlewares.jwt_bearer import JWTBearer
 from services.movie import MovieService

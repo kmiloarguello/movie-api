@@ -2,7 +2,6 @@ from models.movie import Movie as MovieModel
 from schemas.movie import Movie as MovieSchema
 
 class MovieService():
-
   def __init__(self, db) -> None:
     self.db = db
 
